@@ -20,8 +20,8 @@ func waitAndStart() {
 	for {
 		if driver.GetButtonSignal(2,0) == 1 {
 			message = "Start Lift"
-			break
-			
+		} else {			
+			message = "stopp lift"
 		}
 		time.Sleep(100)	
 	}
@@ -59,7 +59,7 @@ func runLift() {
 				if floor == 3 {
 					driver.SetButtonLampOn(2,1)
 					driver.SetDirection(-1)
-				} else if floor == 0 {
+				} else if floor == 0 { 129.241.187.150:20003
 					driver.SetButtonLampOff(2,1)
 					driver.SetDirection(1)
 				} else if driver.GetStopSignal() == 1 {
