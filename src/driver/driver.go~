@@ -52,5 +52,5 @@ func SetButtonLampOff(buttonType int ,floor int) {
 
 //Buttontype = 0 for up, 1 for down and 2 for command
 func GetButtonSignal(buttonType int, floor int) int {
-	return int(C.elev_get_button_signal(C.int(buttonType),C.int(floor))
+	return int(C.elev_get_button_signal(C.int(buttonType),C.int(floor)))
 }

@@ -54,3 +54,19 @@ func SetButtonLampOff(buttonType int ,floor int) {
 func GetButtonSignal(buttonType int, floor int) int {
 	return int(C.elev_get_button_signal(C.int(buttonType),C.int(floor)))
 }
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
