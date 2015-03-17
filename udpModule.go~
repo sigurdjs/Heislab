@@ -44,7 +44,7 @@ func main (){
 	err := udp.Udp_init(20000, 20000, 1024, send_ch, receive_ch)	
 	go SendMessage(send_ch, "Im Alive! Id: "+strconv.Itoa(1))
 	go SendMessage(send_ch, "Fuck off!")	
-	go ReadFromNetwork(receive_ch)
+	//go ReadFromNetwork(receive_ch)
 
 	if (err != nil){
 		fmt.Print("main done. err = %s \n", err)

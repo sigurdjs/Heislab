@@ -36,6 +36,16 @@ func ReadFromNetwork (receive_ch chan udp.Udp_message){
 	}
 }
 
+func IsMasterAlive(receive_ch chan udp.Udp_message) {
+	time.Sleep(90*time.Second)
+	for {
+		time.Sleep(500)
+		fmt.Printf("Receiving----\n")
+		rcv_msg:= <- receive_ch
+		print_udp_message(rcv_msg)
+		networkMessage = rcv_msg.Data		
+	}
+}
 
 
 func main (){
