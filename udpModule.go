@@ -15,7 +15,7 @@ func print_udp_message(msg udp.Udp_message){
 	fmt.Printf("msg:  \n \t raddr = %s \n \t data = %s \n \t length = %v \n", msg.Raddr, msg.Data, msg.Length)
 }
 
-func SendMessage(send_ch chan udp.Udp_message, message string){
+func SendMessage(send_ch chan udp.Udp_message, message struct){
 	for {
 		time.Sleep(1*time.Second)	
 		snd_msg := udp.Udp_message{Raddr:"broadcast", Data:message, Length:len(message)}

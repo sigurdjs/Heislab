@@ -13,7 +13,7 @@ var baddr *net.UDPAddr //Broadcast address
 
 type Udp_message struct {
 	Raddr string //if receiving raddr=senders address, if sending raddr should be set to "broadcast" or an ip:port
-	Test []byte //Type of message sent/recieved
+	Test [1024]byte //Type of message sent/recieved
 	Length int    //length of received data, in #bytes // N/A for sending
 }
 
