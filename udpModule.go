@@ -104,6 +104,7 @@ func ReadFromNetwork (receive_ch chan udp.Udp_message){
 		for i := 0; i < len(NetworkMessage); i++ { //Format the message to be decoded
 			if NetworkMessage[i] == 0 {
 				NetworkMessage = NetworkMessage[:i]
+				break
 			}		
 		}			
 		err := json.Unmarshal(NetworkMessage,&MessageDecoded); 
