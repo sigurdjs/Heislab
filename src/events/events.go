@@ -4,7 +4,11 @@ import (
 	"driver"
 	"time"
 	"fmt"
+	"Network"
+	"udp"
 )
+
+var LightArray [3][4]int //row 0 for up, row 1 for down, row 2 for inside
 
 type order struct {
 	floor int
@@ -14,42 +18,41 @@ type order struct {
 
 
 
-
-func CheckUpButtons(ch chan order) {	
+func CheckUpButtons(send_ch chan udp.Udp_message) {	
 	for i := 0; i < 3; i++ {
-		if driver.GetButtonSignal(0,i) == 1 {
+		if driver.GetButtonSignal(0,i) == 1 && LightArray[0][i] == 0{
+			LightArray[0][i] = 1
 			driver.SetButtonLampOn(0,i)
-			newOrder := order{floor:i, orderType:0}
-			ch <- newOrder
+			Network.SendNewOrderMessage(send_ch,1,0,i)		
 		}
 	}
 }
 
-func CheckDownButtons(ch chan order) {	
+func CheckDownButtons(send_ch chan udp.Udp_message) {	
 	for i := 1; i < 4; i++ {
-		if driver.GetButtonSignal(1,i) == 1 {
-			driver.SetButtonLampOn(1,i)
-			newOrder := order{floor:i, orderType:1}
-			ch <- newOrder
+		if driver.GetButtonSignal(1,i) == 1 && LightArray[1][i] == 0{
+			LightArray[1][i] = 1
+			driver.SetButtonLampOn(1,i)			
+			Network.SendNewOrderMessage(send_ch,1,1,i)
 		}
 	}
 }
 
-func CheckCommandButtons(ch chan order) {
-	for j := 0; j < 4; j++ {
-		if driver.GetButtonSignal(2,j) == 1 {
-			driver.SetButtonLampOn(2,j)
-			newOrder := order{floor:j, orderType:2}
-			ch <- newOrder
+func CheckCommandButtons(send_ch chan udp.Udp_message) {
+	for i := 0; i < 4; i++ {
+		if driver.GetButtonSignal(2,i) == 1 && LightArray[2][i] == 0 {
+			LightArray[2][i] = 1			
+			driver.SetButtonLampOn(2,i)
+			Network.SendNewOrderMessage(send_ch,1,2,i)
 		}
 	}
 }
 
-func ButtonPoller(ch chan order) {
+func ButtonPoller(send_ch chan udp.Udp_message) {
 	for {
-		CheckDownButtons(ch)
-		CheckUpButtons(ch)
-		CheckCommandButtons(ch)
+		CheckDownButtons(send_ch)
+		CheckUpButtons(send_ch)
+		CheckCommandButtons(send_ch)
 		time.Sleep(10)
 	}
 }
@@ -100,13 +103,16 @@ func PrintOrders(ch chan order) {
 
 func main () {
 	driver.Init()
-	/*messages := make(chan order)
-	go ButtonPoller(messages)
-	go PrintOrders(messages)
-	*/
-	floor := make(chan int)
+	send_ch := make (chan udp.Udp_message)
+	receive_ch := make (chan udp.Udp_message)
+	err := udp.Udp_init(20019, 20019, 100, send_ch, receive_ch)	
+	go ButtonPoller(send_ch)
+	/*floor := make(chan int)
 	go FloorPoller(floor)
-	go testRun(floor)
+	go testRun(floor)*/
+	if (err != nil){
+		fmt.Print("main done. err = %s \n", err)
+	}
 	neverReturn := make (chan int)
 	<-neverReturn
 }

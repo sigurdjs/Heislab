@@ -1,4 +1,4 @@
-package main
+package Network
 
 
 import (
@@ -107,7 +107,7 @@ func ReadFromNetwork (receive_ch chan udp.Udp_message){
 
 
 
-func main (){
+/*func main (){
 	send_ch := make (chan udp.Udp_message)
 	receive_ch := make (chan udp.Udp_message)
 	err := udp.Udp_init(20014, 20014, 100, send_ch, receive_ch)	
@@ -118,7 +118,7 @@ func main (){
 	}
 	neverReturn := make (chan int)
 	<-neverReturn
-}
+}*/
 
 
 

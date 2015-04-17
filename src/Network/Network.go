@@ -1,6 +1,5 @@
 package main
 
-
 import (
 	"fmt"
 	"udp"
@@ -13,7 +12,7 @@ import (
 type NetworkMessage struct {
 	MessageType int //1 for alive, 2 for order, 3 for floor update
 	AliveMessage string //Message just to send something	
-	Direction int //0 for inside, 1 for up, 2 for down, -1 for unused
+	Direction int //0 for up, 1 for down, 2 for inside, -1 for unused
 	Floor int //Current floor or destination floor depending on message type, also -1 for unused
 	ElevatorID int //Lift number 1,2,3..n
 }
@@ -101,7 +100,7 @@ func ReadFromNetwork (receive_ch chan udp.Udp_message){
 			fmt.Printf("Error: json.Marshal decoder failed: ReadFromNetwork\n")
 			panic(err)
 		}
-		fmt.Println(MessageDecoded.AliveMessage, )
+		fmt.Println(MessageDecoded)
 	}
 }
 
@@ -110,7 +109,7 @@ func ReadFromNetwork (receive_ch chan udp.Udp_message){
 func main (){
 	send_ch := make (chan udp.Udp_message)
 	receive_ch := make (chan udp.Udp_message)
-	err := udp.Udp_init(20014, 20014, 100, send_ch, receive_ch)	
+	err := udp.Udp_init(20019, 20019, 100, send_ch, receive_ch)	
 	go ReadFromNetwork (receive_ch)
 		
 	if (err != nil){

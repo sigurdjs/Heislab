@@ -1,4 +1,4 @@
-package main
+package udpModule
 
 
 import (
@@ -8,38 +8,33 @@ import (
 	"time"
 )
 
-var masterIsAlive bool
-var networkMessage string
 
-type AliveMessage struct {
-	AliveMessage string //Message just to send something
+
+type NetworkMessage struct {
+	MessageType int //1 for alive, 2 for order, 3 for floor update
+	AliveMessage string //Message just to send something	
+	Direction int //0 for inside, 1 for up, 2 for down, -1 for unused
+	Floor int //Current floor or destination floor depending on message type, also -1 for unused
 	ElevatorID int //Lift number 1,2,3..n
 }
 
-type NewOrderMessage struct {
-	ElevatorID int //Lift number 1,2,3..n
-	OrderType int //0 for inside, 1 for up, 2 for down
-	DestinationFloor int	
-}
-
-type FloorReachedMessage struct {
-	ElevatorID int //Lift number 1,2,3..n
-	Floor int //Current floor 
-	Direction int //1 for up, 2 for down
-}
 
 
-func print_udp_message(msg udp.Udp_message){ 	
+
+/*func print_udp_message(msg udp.Udp_message){ 	
 	fmt.Printf("msg:  \n \t raddr = %s \n \t data = %s \n \t length = %v \n", msg.Raddr, msg.Data, msg.Length)
-}
+}*/
 
 
 
 //Continously sends an alivemessage to the network
 func SendAliveMessage(send_ch chan udp.Udp_message, ElevatorID int) {
-	Imalive := &AliveMessage {
+	Imalive := &NetworkMessage {
+		MessageType: 1,
 		ElevatorID: ElevatorID,
-		AliveMessage: "I'm alive"}
+		AliveMessage: "I'm alive",
+		Direction: -1,
+		Floor: -1}
 	MessageCoded, err := json.Marshal(Imalive)
 	if err != nil {
 		fmt.Printf("Error: json.Marshal encoder failed: AliveMessage\n")
@@ -48,18 +43,18 @@ func SendAliveMessage(send_ch chan udp.Udp_message, ElevatorID int) {
 	for {
 		time.Sleep(1*time.Second)	
 		snd_msg := udp.Udp_message{Raddr:"broadcast", Data:MessageCoded, Length:len(MessageCoded)}
-		fmt.Printf("Sending------\n")
 		send_ch <- snd_msg
-		//print_udp_message(snd_msg)		
 	}
 }
 
 //Sends a new order once
-func SendNewOrderMessage(send_ch chan udp.Udp_message, ElevatorID int, OrderType int, DestinationFloor int) {
-	Order := &NewOrderMessage {
+func SendNewOrderMessage(send_ch chan udp.Udp_message, ElevatorID int, Direction int, DestinationFloor int) {
+	Order := &NetworkMessage {
+		MessageType: 2,
 		ElevatorID: ElevatorID,
-		OrderType: OrderType,
-		DestinationFloor: DestinationFloor}
+		Direction: Direction,
+		Floor: DestinationFloor,
+		AliveMessage: ""}
 	MessageCoded, err := json.Marshal(Order)
 	if err != nil {
 		fmt.Printf("Error: json.Marshal encoder failed: NewOrderMessage\n")
@@ -70,13 +65,15 @@ func SendNewOrderMessage(send_ch chan udp.Udp_message, ElevatorID int, OrderType
 	send_ch <- snd_msg
 }	
 	
-
-func SendFloorReached(send_ch chan udp.Udp_message, ElevatorID int, Floor int, Direction int) {
-	FloorReached := &FloorReachedMessage {
+//Sends the current floor of the lift once
+func SendCurrentFloor(send_ch chan udp.Udp_message, ElevatorID int, Floor int, Direction int) {
+	CurrentFloor := &NetworkMessage {
+		MessageType: 3,
 		ElevatorID: ElevatorID,
 		Floor: Floor,
-		Direction: Direction}
-	MessageCoded, err := json.Marshal(FloorReached)
+		Direction: Direction,
+		AliveMessage: ""}
+	MessageCoded, err := json.Marshal(CurrentFloor)
 	if err != nil {
 		fmt.Printf("Error: json.Marshal encoder failed: FloorReachedMessage\n")
 		panic(err)
@@ -87,32 +84,24 @@ func SendFloorReached(send_ch chan udp.Udp_message, ElevatorID int, Floor int, D
 }
 
 
-
-
-
-
-
-
-
-
 func ReadFromNetwork (receive_ch chan udp.Udp_message){
 	for {
 		fmt.Printf("Receiving----\n")
 		rcv_msg:= <- receive_ch
-		NetworkMessage := rcv_msg.Data
-		var MessageDecoded AliveMessage
-		for i := 0; i < len(NetworkMessage); i++ { //Format the message to be decoded
-			if NetworkMessage[i] == 0 {
-				NetworkMessage = NetworkMessage[:i]
+		Message := rcv_msg.Data
+		var MessageDecoded NetworkMessage
+		for i := 0; i < len(Message); i++ { //Format the message to be decoded
+			if Message[i] == 0 {
+				Message = Message[:i]
 				break
 			}		
 		}			
-		err := json.Unmarshal(NetworkMessage,&MessageDecoded); 
+		err := json.Unmarshal(Message,&MessageDecoded); 
 		if err != nil {	
 			fmt.Printf("Error: json.Marshal decoder failed: ReadFromNetwork\n")
 			panic(err)
 		}
-		fmt.Println(MessageDecoded)
+		fmt.Println(MessageDecoded.AliveMessage, )
 	}
 }
 
@@ -121,12 +110,23 @@ func ReadFromNetwork (receive_ch chan udp.Udp_message){
 func main (){
 	send_ch := make (chan udp.Udp_message)
 	receive_ch := make (chan udp.Udp_message)
-	err := udp.Udp_init(20014, 20014, 60, send_ch, receive_ch)	
+	err := udp.Udp_init(20014, 20014, 100, send_ch, receive_ch)	
 	go ReadFromNetwork (receive_ch)
-	//go SendAliveMessage(send_ch,1)	
+		
 	if (err != nil){
 		fmt.Print("main done. err = %s \n", err)
 	}
 	neverReturn := make (chan int)
 	<-neverReturn
 }
+
+
+
+
+
+
+
+
+
+
+

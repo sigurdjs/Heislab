@@ -101,7 +101,7 @@ func ReadFromNetwork (receive_ch chan udp.Udp_message){
 			fmt.Printf("Error: json.Marshal decoder failed: ReadFromNetwork\n")
 			panic(err)
 		}
-		fmt.Println(MessageDecoded.AliveMessage, )
+		fmt.Println(MessageDecoded)
 	}
 }
 
@@ -111,7 +111,7 @@ func main (){
 	send_ch := make (chan udp.Udp_message)
 	receive_ch := make (chan udp.Udp_message)
 	err := udp.Udp_init(20014, 20014, 100, send_ch, receive_ch)	
-	go ReadFromNetwork (receive_ch)
+	go SendAliveMessage(send_ch,1)
 		
 	if (err != nil){
 		fmt.Print("main done. err = %s \n", err)
