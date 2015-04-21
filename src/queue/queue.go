@@ -9,18 +9,18 @@ const Floors = 4
 const Lifts = 3
 
 
-type order struct {
+type Order struct {
 	DestinationFloor int
 	ButtonType int // 0 for up, 1 for down and 2 for command
 	//elevatorId int //Which elevator the order is from
 }
 
-type position struct {
+type Position struct {
 	CurrentFloor int
 	DestinationFloor int
 }
 
-var OrdersToComplete[] order
+//var OrdersToComplete[] order
 
 //Only for master
 
@@ -46,7 +46,7 @@ var OrdersToComplete[] order
 
 
 
-func Direction(LiftPos position) int {
+func Direction(LiftPos Position) int {
 	dir := -1 //0 for up, 1 for down, 2 for idle, -1 for unused 
 	if LiftPos.CurrentFloor < LiftPos.DestinationFloor {
 		dir = 0
@@ -58,7 +58,7 @@ func Direction(LiftPos position) int {
 	return dir
 }
 
-func CostFunction(NewOrder order, LiftPos[] position) int {
+func CostFunction(NewOrder Order, LiftPos[] Position) int {
 	Cost := []int{100000,100000,1000000}
 	for lift := 0; lift < Lifts; lift++ {
 		switch (Direction(LiftPos[lift])) {
@@ -74,11 +74,11 @@ func CostFunction(NewOrder order, LiftPos[] position) int {
 		}
 	}
 	MaxCost := 0 
-	MaxLift := -1
+//	MaxLift := -1
 	for i := 0; i < Lifts; i++ {
 		if Cost[i] > MaxCost {
 			MaxCost = Cost[i]
-			MaxLift = i
+			//MaxLift = i
 		}	
 	}
 	return MaxCost

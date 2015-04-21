@@ -12,8 +12,8 @@ import (
 
 var dest int
 var LightArray [3][4] int //row 0 for up, row 1 for down, row 2 for inside
-var MasterArray[] queue.order
-var LiftPos[3] queue.position
+var MasterArray[] queue.Order
+var LiftPos[] queue.Position
 
 
 func CheckUpButtons(send_ch chan udp.Udp_message) {	
@@ -41,7 +41,10 @@ func CheckCommandButtons(send_ch chan udp.Udp_message, commandbutton chan int) {
 		if driver.GetButtonSignal(2,i) == 1 && LightArray[2][i] == 0 {
 			LightArray[2][i] = 1			
 			driver.SetButtonLampOn(2,i)
+			Network.SendCurrentFloor(send_ch,1,4,1)
+			time.Sleep(10)
 			Network.SendNewOrderMessage(send_ch,1,2,i)
+			commandbutton <- i
 		}
 	}
 }
@@ -61,43 +64,46 @@ func FloorPoller(flooreached chan int) {
 		switch  currentFloor {
 		case 0:
 			driver.SetFloorLamp(0)
+			flooreached <- 0
 		case 1:
 			driver.SetFloorLamp(1)
+			flooreached <- 1
 		case 2:
 			driver.SetFloorLamp(2)
+			flooreached <- 2
 		case 3:
 			driver.SetFloorLamp(3)
+			flooreached <- 3
 		}		
 		time.Sleep(100)
 	}		
 }	
 	
 func MessageRecieved(MessageToProcess chan Network.NetworkMessage) {
-	var newOrder queue.order
-	timeout := make(chan bool, 1)
+	var newOrder queue.Order
+	/*timeout := make(chan bool, 1)
 	go func() {
-    	time.Sleep(1 * time.Second)
-    	timeout <- true
-	}()
+    		time.Sleep(1 * time.Second)
+    		timeout <- true
+	}()*/
 	for {	
-		select {
-		case <- MessageToProcess:
-			Message := <- MessageToProcess
-			switch Message.MessageType {
-			case 1:
-				fmt.Printf("I'm alive from: %v \n", Message.AliveMessage)
-			case 2:
-				newOrder.DestinationFloor = Message.DestinationFloor
-				newOrder.ButtonType = Message.ButtonType
-				MasterArray = append(MasterArray,newOrder)
-				cost := queue.CostFunction(MasterArray[0],LiftPos)
-				fmt.Printf("Kosten for denne knapp er: %v \n",cost)
-			case 3:
-				LiftPos[Message.elevatorId] = queue.position {Message.currentFloor,Message.DestinationFloor}	
-			}
-		case <- timeout:
-			fmt.Printf("Timeout occured\n")
+		//select {
+		//case <- MessageToProcess:
+		Message := <- MessageToProcess
+		switch Message.MessageType {
+		case 1:
+			fmt.Printf("I'm alive from: %v \n", Message.AliveMessage)
+		case 2:
+			newOrder.DestinationFloor = Message.DestinationFloor
+			newOrder.ButtonType = Message.ButtonType
+			MasterArray = append(MasterArray,newOrder)
+			cost := queue.CostFunction(MasterArray[0],LiftPos)
+			fmt.Printf("Kosten for denne knapp er: %v \n",cost)
+		case 3:
+			LiftPos[Message.ElevatorID] = queue.Position {Message.CurrentFloor,Message.DestinationFloor}	
 		}
+		//case <- timeout:
+		//	fmt.Printf("Timeout occured\n")
 	}
 }
 
@@ -105,10 +111,11 @@ func Start(commandbutton chan int) {
 	for {
 		dest = <- commandbutton
 		if dest < driver.GetFloor() {
-			driver.SetDirection(1)
-		} else {
 			driver.SetDirection(-1)
+		} else {
+			driver.SetDirection(1)
 		}
+		time.Sleep(100)
 	}
 }
 
@@ -118,6 +125,7 @@ func Stop(flooreached chan int) {
 		if flr == dest {
 			driver.SetDirection(0)
 		}
+		time.Sleep(100)
 	}
 }
 
@@ -126,25 +134,30 @@ func Stop(flooreached chan int) {
 
 
 
-func PrintOrders(ch chan queue.order) {
+/*func PrintOrders(ch chan queue.Order) {
 	for {
 		newOrder := <- ch 
-		fmt.Printf("Floor: %v \n", newOrder.floor)	
-		fmt.Printf("Button:%v \n", newOrder.orderType)
+		fmt.Printf("Floor: %v \n", newOrder.Floor)	
+		fmt.Printf("Button:%v \n", newOrder.OrderType)
 		time.Sleep(10)
 	}
-}
+}*/
 
 
 func main () {
 	driver.Init()
+	driver.SetDirection(0)
 	commandbutton := make(chan int)
 	flooreached := make(chan int)
-	/*send_ch := make (chan udp.Udp_message)
+	send_ch := make (chan udp.Udp_message)
 	receive_ch := make (chan udp.Udp_message)
-	err := udp.Udp_init(20019, 20019, 100, send_ch, receive_ch)	*/
+	MessageToProcess := make (chan Network.NetworkMessage)
+	
+	err := udp.Udp_init(20025, 20025, 200, send_ch, receive_ch)
+	go Network.ReadFromNetwork(receive_ch, MessageToProcess)
 	go ButtonPoller(send_ch,commandbutton)
-	go FloorPoller(floor)
+	go FloorPoller(flooreached)
+	go MessageRecieved(MessageToProcess)
 	go Start(commandbutton)
 	go Stop(flooreached)
 	if (err != nil){
