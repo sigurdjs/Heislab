@@ -13,8 +13,9 @@ import (
 type NetworkMessage struct {
 	MessageType int //1 for alive, 2 for order, 3 for floor update
 	AliveMessage string //Message just to send something	
-	Direction int //0 for up, 1 for down, 2 for inside, -1 for unused
-	Floor int //Current floor or destination floor depending on message type, also -1 for unused
+	ButtonType int //0 for up, 1 for down, 2 for inside, -1 for unused
+	DestinationFloor int //-1 for unused
+	CurrentFloor int //Current floor or destination floor depending on message type, also -1 for unused
 	ElevatorID int //Lift number 1,2,3..n
 }
 
@@ -33,8 +34,9 @@ func SendAliveMessage(send_ch chan udp.Udp_message, ElevatorID int) {
 		MessageType: 1,
 		ElevatorID: ElevatorID,
 		AliveMessage: "I'm alive",
-		Direction: -1,
-		Floor: -1}
+		ButtonType : -1,
+		DestinationFloor: -1,
+		CurrentFloor: -1}
 	MessageCoded, err := json.Marshal(Imalive)
 	if err != nil {
 		fmt.Printf("Error: json.Marshal encoder failed: AliveMessage\n")
@@ -48,12 +50,13 @@ func SendAliveMessage(send_ch chan udp.Udp_message, ElevatorID int) {
 }
 
 //Sends a new order once
-func SendNewOrderMessage(send_ch chan udp.Udp_message, ElevatorID int, Direction int, DestinationFloor int) {
+func SendNewOrderMessage(send_ch chan udp.Udp_message, ElevatorID int, ButtonType int, DestinationFloor int) {
 	Order := &NetworkMessage {
 		MessageType: 2,
 		ElevatorID: ElevatorID,
-		Direction: Direction,
-		Floor: DestinationFloor,
+		ButtonType: ButtonType,
+		DestinationFloor: DestinationFloor,
+		CurrentFloor : -1,
 		AliveMessage: ""}
 	MessageCoded, err := json.Marshal(Order)
 	if err != nil {
@@ -66,12 +69,13 @@ func SendNewOrderMessage(send_ch chan udp.Udp_message, ElevatorID int, Direction
 }	
 	
 //Sends the current floor of the lift once
-func SendCurrentFloor(send_ch chan udp.Udp_message, ElevatorID int, Floor int, Direction int) {
+func SendCurrentFloor(send_ch chan udp.Udp_message, ElevatorID int, Destination int, CurrentFloor int) {
 	CurrentFloor := &NetworkMessage {
 		MessageType: 3,
 		ElevatorID: ElevatorID,
-		Floor: Floor,
-		Direction: Direction,
+		CurrentFloor: CurrentFloor,
+		DestinationFloor: Destination
+		ButtonType: -1,
 		AliveMessage: ""}
 	MessageCoded, err := json.Marshal(CurrentFloor)
 	if err != nil {

@@ -8,7 +8,7 @@ import (
 	"udp"
 )
 
-var LightArray [3][4]int //row 0 for up, row 1 for down, row 2 for inside
+var LightArray [3][4] bool //row 0 for up, row 1 for down, row 2 for inside
 
 type order struct {
 	floor int
@@ -21,7 +21,7 @@ type order struct {
 func CheckUpButtons(send_ch chan udp.Udp_message) {	
 	for i := 0; i < 3; i++ {
 		if driver.GetButtonSignal(0,i) == 1 && LightArray[0][i] == 0{
-			LightArray[0][i] = 1
+			LightArray[0][i] = true
 			driver.SetButtonLampOn(0,i)
 			Network.SendNewOrderMessage(send_ch,1,0,i)		
 		}
@@ -31,7 +31,7 @@ func CheckUpButtons(send_ch chan udp.Udp_message) {
 func CheckDownButtons(send_ch chan udp.Udp_message) {	
 	for i := 1; i < 4; i++ {
 		if driver.GetButtonSignal(1,i) == 1 && LightArray[1][i] == 0{
-			LightArray[1][i] = 1
+			LightArray[1][i] = true
 			driver.SetButtonLampOn(1,i)			
 			Network.SendNewOrderMessage(send_ch,1,1,i)
 		}
@@ -41,7 +41,7 @@ func CheckDownButtons(send_ch chan udp.Udp_message) {
 func CheckCommandButtons(send_ch chan udp.Udp_message) {
 	for i := 0; i < 4; i++ {
 		if driver.GetButtonSignal(2,i) == 1 && LightArray[2][i] == 0 {
-			LightArray[2][i] = 1			
+			LightArray[2][i] = true			
 			driver.SetButtonLampOn(2,i)
 			Network.SendNewOrderMessage(send_ch,1,2,i)
 		}
