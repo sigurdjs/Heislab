@@ -1,14 +1,17 @@
 package queue
 
-import math
 
-Floors = 4
-Lifts = 3
+import (
+	"math"
+)
+
+const Floors = 4
+const Lifts = 3
 
 
 type order struct {
 	DestinationFloor int
-	OrderType int // 0 for up, 1 for down and 2 for command
+	ButtonType int // 0 for up, 1 for down and 2 for command
 	//elevatorId int //Which elevator the order is from
 }
 
@@ -17,27 +20,48 @@ type position struct {
 	DestinationFloor int
 }
 
-var OrdersToComplete[Floors*3] order
+var OrdersToComplete[] order
 
 //Only for master
-var LiftPos[Lifts] position
-var MasterArrayOfOrders[Floors*2] order
+
+
+
+
+/*func main() {
+	order1 := order {
+		DestinationFloor: 1,
+		ButtonType: 2}
+
+	order2 := order {
+		DestinationFloor: 1,
+		ButtonType: 2}
+	MasterArrayOfOrders = append(MasterArrayOfOrders,order1)
+	fmt.Println(MasterArrayOfOrders)
+	MasterArrayOfOrders = append(MasterArrayOfOrders,order2)
+	fmt.Println(MasterArrayOfOrders)
+}
+*/
+
+
+
+
 
 func Direction(LiftPos position) int {
-	Direction = -1 //0 for up, 1 for down, 2 for idle, -1 for unused 
+	dir := -1 //0 for up, 1 for down, 2 for idle, -1 for unused 
 	if LiftPos.CurrentFloor < LiftPos.DestinationFloor {
-		Direction = 0
+		dir = 0
 	} else if LiftPos.CurrentFloor > LiftPos.DestinationFloor {
-		Direction = 1
+		dir = 1
 	} else {
-		Direction = 2
+		dir = 2
 	}
+	return dir
 }
 
-func CostFunction(NewOrder order, LiftPos[] order) int {
-	var Cost[0:Lifts] = 1000000 
+func CostFunction(NewOrder order, LiftPos[] position) int {
+	Cost := []int{100000,100000,1000000}
 	for lift := 0; lift < Lifts; lift++ {
-		Switch (Direction(LiftPos[lift])) {
+		switch (Direction(LiftPos[lift])) {
 		case 0: //Up
 			if NewOrder.DestinationFloor > LiftPos[lift].CurrentFloor && NewOrder.DestinationFloor < LiftPos[lift].DestinationFloor {
 				Cost[lift] = 3*(NewOrder.DestinationFloor - LiftPos[lift].CurrentFloor) }	 
@@ -45,17 +69,19 @@ func CostFunction(NewOrder order, LiftPos[] order) int {
 			if NewOrder.DestinationFloor < LiftPos[lift].CurrentFloor && NewOrder.DestinationFloor > LiftPos[lift].DestinationFloor {
 				Cost[lift] = 3*(LiftPos[lift].CurrentFloor - NewOrder.DestinationFloor) }	 
 		case 2: //Idle
-			Cost[lift] = math.abs(LiftPos[lift].CurrentFloor - NewOrder.DestinationFloor)
+			temp := float64(LiftPos[lift].CurrentFloor - NewOrder.DestinationFloor)
+			Cost[lift] = int(math.Abs(temp))
 		}
 	}
-	var MaxCost = 0, MaxLift = -1
-	for i := O; i < Lifts i++ {
-		if Cost[i] > MaxCost
+	MaxCost := 0 
+	MaxLift := -1
+	for i := 0; i < Lifts; i++ {
+		if Cost[i] > MaxCost {
 			MaxCost = Cost[i]
 			MaxLift = i
 		}	
 	}
-	return MaxLift
+	return MaxCost
 }
 
 

@@ -1,4 +1,5 @@
-package Network
+package main
+
 
 
 import (
@@ -70,14 +71,14 @@ func SendNewOrderMessage(send_ch chan udp.Udp_message, ElevatorID int, ButtonTyp
 	
 //Sends the current floor of the lift once
 func SendCurrentFloor(send_ch chan udp.Udp_message, ElevatorID int, Destination int, CurrentFloor int) {
-	CurrentFloor := &NetworkMessage {
+	SendFloor := &NetworkMessage {
 		MessageType: 3,
 		ElevatorID: ElevatorID,
 		CurrentFloor: CurrentFloor,
-		DestinationFloor: Destination
+		DestinationFloor: Destination,
 		ButtonType: -1,
 		AliveMessage: ""}
-	MessageCoded, err := json.Marshal(CurrentFloor)
+	MessageCoded, err := json.Marshal(SendFloor)
 	if err != nil {
 		fmt.Printf("Error: json.Marshal encoder failed: FloorReachedMessage\n")
 		panic(err)
@@ -88,7 +89,10 @@ func SendCurrentFloor(send_ch chan udp.Udp_message, ElevatorID int, Destination 
 }
 
 
-func ReadFromNetwork (receive_ch chan udp.Udp_message){
+
+
+
+func ReadFromNetwork (receive_ch chan udp.Udp_message) { //, MessageToProcess chan NetworkMessage){
 	for {
 		fmt.Printf("Receiving----\n")
 		rcv_msg:= <- receive_ch
@@ -111,10 +115,11 @@ func ReadFromNetwork (receive_ch chan udp.Udp_message){
 
 
 
-/*func main (){
+func main (){
 	send_ch := make (chan udp.Udp_message)
 	receive_ch := make (chan udp.Udp_message)
 	err := udp.Udp_init(20014, 20014, 100, send_ch, receive_ch)	
+	go SendAliveMessage(send_ch, 1)
 	go ReadFromNetwork (receive_ch)
 		
 	if (err != nil){
@@ -122,7 +127,7 @@ func ReadFromNetwork (receive_ch chan udp.Udp_message){
 	}
 	neverReturn := make (chan int)
 	<-neverReturn
-}*/
+}
 
 
 
