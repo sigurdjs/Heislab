@@ -1,7 +1,5 @@
 package queue
 
-import math
-
 Floors = 4
 Lifts = 3
 
@@ -21,7 +19,10 @@ var OrdersToComplete[Floors*3] order
 
 //Only for master
 var LiftPos[Lifts] position
-var MasterArrayOfOrders[Floors*2] order
+var MasterArrayOfOrders[Lifts][Floors*3] order
+var cost = 100000000
+
+
 
 func Direction(LiftPos position) int {
 	Direction = -1 //0 for up, 1 for down, 2 for idle, -1 for unused 
@@ -34,28 +35,57 @@ func Direction(LiftPos position) int {
 	}
 }
 
-func CostFunction(NewOrder order, LiftPos[] order) int {
+func SearchForBadOrder(LiftDirection int, NewOrder order, MasterArrayOfOrders[], lift) {
+	var BadOrder = false
+	for floor := 0; floor < 3*Floors; floor++ {
+		if 
+}
+
+
+
+
+
+
+
+
+
+func CostFunction(NewOrder order, LiftPos[] order, MasterArrayOfOrders[][] order) {
 	var Cost[0:Lifts] = 1000000 
-	for lift := 0; lift < Lifts; lift++ {
+	for lift = 0; lift < Lifts; lift++ {
 		Switch (Direction(LiftPos[lift])) {
 		case 0: //Up
 			if NewOrder.DestinationFloor > LiftPos[lift].CurrentFloor && NewOrder.DestinationFloor < LiftPos[lift].DestinationFloor {
-				Cost[lift] = 3*(NewOrder.DestinationFloor - LiftPos[lift].CurrentFloor) }	 
+				Cost[lift] = NewOrder.DestinationFloor - LiftPos[lift].CurrentFloor }	 
 		case 1: //Down			
 			if NewOrder.DestinationFloor < LiftPos[lift].CurrentFloor && NewOrder.DestinationFloor > LiftPos[lift].DestinationFloor {
-				Cost[lift] = 3*(LiftPos[lift].CurrentFloor - NewOrder.DestinationFloor) }	 
+				Cost[lift] = LiftPos[lift].CurrentFloor - NewOrder.DestinationFloor }	 
 		case 2: //Idle
-			Cost[lift] = math.abs(LiftPos[lift].CurrentFloor - NewOrder.DestinationFloor)
+			Cost[lift] = 0
+		}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		if SearchForBadOrder(NewOrder,ArrayOfOrders,lift) == false {
+			cost =  abs(CurrentPos.Floor - NewOrder.Floor)
+			for elemtents in ArrayOfOrders != -1 {
+					cost += 3 
+				}
+			}
 		}
 	}
-	var MaxCost = 0, MaxLift = -1
-	for i := O; i < Lifts i++ {
-		if Cost[i] > MaxCost
-			MaxCost = Cost[i]
-			MaxLift = i
-		}	
-	}
-	return MaxLift
 }
 
 
