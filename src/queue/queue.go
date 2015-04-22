@@ -38,10 +38,10 @@ func FindDirection(LiftPos Position) int {
 	return dir
 }
 
-func CostFunction(NewOrder Order, LiftPos[] Position) int {
+func CostFunction(NewOrder Order, LiftPos[3] Position) int {
 	Cost := []int{100000,100000,1000000}
 	for lift := 0; lift < Lifts; lift++ {
-		switch (Direction(LiftPos[lift])) {
+		switch (FindDirection(LiftPos[lift])) {
 		case 0: //Up
 			if NewOrder.DestinationFloor > LiftPos[lift].CurrentFloor && NewOrder.DestinationFloor < LiftPos[lift].DestinationFloor {
 				Cost[lift] = 3*(NewOrder.DestinationFloor - LiftPos[lift].CurrentFloor) }	 
