@@ -20,33 +20,13 @@ type Position struct {
 	DestinationFloor int
 }
 
-//var OrdersToComplete[] order
-
-//Only for master
-
-
-
-
-/*func main() {
-	order1 := order {
-		DestinationFloor: 1,
-		ButtonType: 2}
-
-	order2 := order {
-		DestinationFloor: 1,
-		ButtonType: 2}
-	MasterArrayOfOrders = append(MasterArrayOfOrders,order1)
-	fmt.Println(MasterArrayOfOrders)
-	MasterArrayOfOrders = append(MasterArrayOfOrders,order2)
-	fmt.Println(MasterArrayOfOrders)
-}
-*/
 
 
 
 
 
-func Direction(LiftPos Position) int {
+
+func FindDirection(LiftPos Position) int {
 	dir := -1 //0 for up, 1 for down, 2 for idle, -1 for unused 
 	if LiftPos.CurrentFloor < LiftPos.DestinationFloor {
 		dir = 0

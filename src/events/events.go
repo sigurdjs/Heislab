@@ -55,23 +55,56 @@ func ButtonPoller(send_ch chan udp.Udp_message, commandbutton chan int) {
 	}
 }
 
-func FloorPoller(flooreached chan int) {
+func InitializeLift() {
+	driver.Init()
+	driver.SetDirection(1)
+	if driver.GetFloor() == 0 {
+		driver.SetDirection(0)
+	}
+}
+
+func States(Task string) {
+	switch Task {
+	case "UP":
+		driver.SetDirection(1)
+	case "DOWN":
+		driver.SetDirection(-1)
+	case "STOP":
+		driver.SetDirection(0)
+		driver.SetDoorOpen(1)
+		time.Sleep(3*time.Second)
+		driver.SetDoorOpen(0)
+	}
+}
+
+
+
+func FloorPoller(FloorReached chan int) {
 	for {
 		currentFloor := driver.GetFloor()
 		switch  currentFloor {
 		case 0:
 			driver.SetFloorLamp(0)
+			FloorReached <- 0
 		case 1:
 			driver.SetFloorLamp(1)
+			FloorReached <- 1
 		case 2:
 			driver.SetFloorLamp(2)
+			FloorReached <- 2
 		case 3:
 			driver.SetFloorLamp(3)
+			FloorReached <- 3
 		}		
 		time.Sleep(100)
 	}		
 }	
 	
+
+
+
+
+
 func MessageRecieved(MessageToProcess chan Network.NetworkMessage) {
 	var newOrder queue.order
 	timeout := make(chan bool, 1)
