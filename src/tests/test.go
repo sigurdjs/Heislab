@@ -1,9 +1,7 @@
-package queue
+package test
 
 
-import (
-	"math"
-)
+import "math"
 
 const Floors = 4
 const Lifts = 3
@@ -33,16 +31,16 @@ func FindDirection(LiftPos Position) int {
 	}
 	return dir
 }
-
+/*
 func CostFunction(NewOrder Order, LiftPos[] Position) int {
-	Cost := []int{100000,100000,1000000}
+	Cost := []int{100000,100000,100000}
 	for lift := 0; lift < Lifts; lift++ {
 		switch (Direction(LiftPos[lift])) {
 		case 0: //Up
-			if NewOrder.DestinationFloor > LiftPos[lift].CurrentFloor && NewOrder.DestinationFloor < LiftPos[lift].DestinationFloor {
+			if NewOrder.DestinationFloor > LiftPos[lift].CurrentFloor && NewOrder.DestinationFloor <= LiftPos[lift].DestinationFloor {
 				Cost[lift] = 3*(NewOrder.DestinationFloor - LiftPos[lift].CurrentFloor) }	 
 		case 1: //Down			
-			if NewOrder.DestinationFloor < LiftPos[lift].CurrentFloor && NewOrder.DestinationFloor > LiftPos[lift].DestinationFloor {
+			if NewOrder.DestinationFloor < LiftPos[lift].CurrentFloor && NewOrder.DestinationFloor >= LiftPos[lift].DestinationFloor {
 				Cost[lift] = 3*(LiftPos[lift].CurrentFloor - NewOrder.DestinationFloor) }	 
 		case 2: //Idle
 			temp := float64(LiftPos[lift].CurrentFloor - NewOrder.DestinationFloor)
@@ -50,36 +48,31 @@ func CostFunction(NewOrder Order, LiftPos[] Position) int {
 		}
 	}
 	MaxCost := 0 
-//	MaxLift := -1
 	for i := 0; i < Lifts; i++ {
 		if Cost[i] > MaxCost {
 			MaxCost = Cost[i]
-			//MaxLift = i
 		}	
 	}
 	return MaxCost
-}
+}*/
 
 
 
 // Lager et midlertidig array
-var ElevatorQueue = [][]int {{1,2},{0,1},{2,4},{1,4}}
 
-func InternalCostFunction(ElevatorQueue [][]int, LiftPos Position int) {
-	
-	
+
+func InternalCostFunction(ElevatorQueue [][]int, LiftPos Position int) {	
 	// Sjekker kosten
 	var Cost = make(map[int]int)
 	for i := 0; i < len(ElevatorQueue); i++ {
 		
-		if (FindDirection == 0 && ElevatorQueue[i][0] == 1) || (FindDirection == 1 && ElevatorQueue[i][0] == 0 {				// feil retning i forhold til kjøring		
+		if (FindDirection == 0 && ElevatorQueue[i][0] == 1) || (FindDirection == 1 && ElevatorQueue[i][0] == 0) {				// feil retning i forhold til kjøring		
 			Cost[i] += 10 }
 		
-		if (FindDirection == 0 && (ElevatorQueue[i][1] < LiftPos.CurrentFloor || ElevatorQueue[i][1] > LiftPos.DestinationFloor)) || 
-			(FindDirection == 1 && (ElevatorQueue[i][1] > LiftPos.CurrentFloor || ElevatorQueue[i][1] < LiftPos.DestinationFloor)) {	// ikke mellom CF og DF	
+		if (FindDirection == 0 && (ElevatorQueue[i][1] < LiftPos.CurrentFloor || ElevatorQueue[i][1] > LiftPos.DestinationFloor)) || (FindDirection == 1 && (ElevatorQueue[i][1] > LiftPos.CurrentFloor || ElevatorQueue[i][1] < LiftPos.DestinationFloor)) {	// ikke mellom CF og DF	
 			Cost[i] += 5 }			
 
-		if ElevatorQueue[i][1]  {														// ytre knapper
+		if ElevatorQueue[i][0] == 0 || ElevatorQueue[i][0] == 1 {														// ytre knapper
 			Cost[i] += 2 }
 		
 		if ElevatorQueue[i][0] == 2 {														// indre knapper
