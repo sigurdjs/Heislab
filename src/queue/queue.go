@@ -4,6 +4,7 @@ package queue
 import (
 	"math"
 	"fmt"
+//	"time"
 )
 
 const Floors = 4
@@ -62,70 +63,81 @@ func CostFunction(NewOrder Order, LiftPos[] Position) int {
 
 
 // Lager et midlertidig array
-func InternalCostFunction(OrderQueue[] Order, LiftPos Position) {	
-	ElevatorQueue := make([][]int, len(OrderQueue))
+func InternalCostFunction(OrderQueue[] Order, LiftPos Position) []Order{	
+	/*ElevatorQueue := make([][]int, len(OrderQueue))
 	for a:= 0; a < len(OrderQueue); a++ {
 		ElevatorQueue[a] = make([]int, 2)
-	} 
+	}
 	for k := 0; k < len(OrderQueue); k++{
 		ElevatorQueue[k][0] = OrderQueue[k].ButtonType
 		ElevatorQueue[k][1] = OrderQueue[k].DestinationFloor
-	}
+	}*/
 	// Sjekker kosten
 	Cost := make(map[int]int)
-	for i := 0; i < len(ElevatorQueue); i++ {
-		
-		if (FindDirection(LiftPos) == 0 && ElevatorQueue[i][0] == 1) || (FindDirection(LiftPos) == 1 && ElevatorQueue[i][0] == 0) { // feil retning i forhold til kjøring		
-			if (FindDirection(LiftPos) == 0 && ElevatorQueue[i][1] == 3) {
+	for i := 0; i < len(OrderQueue); i++ {
+		if (FindDirection(LiftPos) == 0 && OrderQueue[i].ButtonType == 1) || (FindDirection(LiftPos) == 1 && OrderQueue[i].ButtonType == 0) { // feil retning i forhold til kjøring		
+			if (FindDirection(LiftPos) == 0 && OrderQueue[i].DestinationFloor == 3) {
 				Cost[i] += 3
 			}
-			if (FindDirection(LiftPos) == 1 && ElevatorQueue[i][1] == 0) {
-				Cost[i] += 3
+			if (FindDirection(LiftPos) == 1 && OrderQueue[i].DestinationFloor == 0) {
+			Cost[i] += 3
 			} else {
 				Cost[i] += 10} 
-		}
-		
-		if (FindDirection(LiftPos) == 0 && (ElevatorQueue[i][1] < LiftPos.CurrentFloor || ElevatorQueue[i][1] > LiftPos.DestinationFloor)) || 
-			(FindDirection(LiftPos) == 1 && (ElevatorQueue[i][1] > LiftPos.CurrentFloor || ElevatorQueue[i][1] < LiftPos.DestinationFloor)) {	// ikke mellom CF og DF	
+			}	
+		if (FindDirection(LiftPos) == 0 && (OrderQueue[i].DestinationFloor < LiftPos.CurrentFloor || OrderQueue[i].DestinationFloor > LiftPos.DestinationFloor)) || 
+			(FindDirection(LiftPos) == 1 && (OrderQueue[i].DestinationFloor > LiftPos.CurrentFloor || OrderQueue[i].DestinationFloor < LiftPos.DestinationFloor)) {	// ikke mellom CF og DF	
 			Cost[i] += 5 }			
 
-		if ElevatorQueue[i][0] == 0 || ElevatorQueue[i][0] == 1   {														// ytre knapper
+		if OrderQueue[i].ButtonType == 0 || OrderQueue[i].ButtonType == 1   {														// ytre knapper
 			Cost[i] += 2 }
-		
-		if ElevatorQueue[i][0] == 2 {														// indre knapper
+			
+		if OrderQueue[i].ButtonType == 2 {														// indre knapper
 			Cost[i] += 1 }
 
 		Cost[i] += 0	
-
-		//time.Sleep(10)	
+		//time.Sleep(10)
+		for j := LiftPos.CurrentFloor; j < OrderQueue[i].DestinationFloor; j++ {
+			Cost[i] += 2
+		}	
 	}
 	MinCostPosition := 0
 	MinCost := Cost[0]
-	for j := 1; j < len(ElevatorQueue); j++ {
+	for j := 1; j < len(OrderQueue); j++ {
 		if Cost[j] < MinCost {
 			MinCost = Cost[j]
 			MinCostPosition = j
 		}
 	} 
 	
-	fmt.Println(MinCostPosition)
+	fmt.Println(Cost)
 
-	fmt.Println("Before =", ElevatorQueue)	
-
-	SortArray(ElevatorQueue,MinCostPosition)
+	//fmt.Println("Before =", OrderQueue)	
+	var x[] Order
+	a := OrderQueue[MinCostPosition]
+	x = append(x,a)
+	//fmt.Println(x)
+	if MinCostPosition == len(OrderQueue)-1 {
+		OrderQueue = OrderQueue[:MinCostPosition]
+	} else {
+		OrderQueue = append(OrderQueue[MinCostPosition:],OrderQueue[:MinCostPosition+1]...)
+	}
+	x = append(x,OrderQueue...)
+	//SortArray(OrderQueue,MinCostPosition)
 	
-	fmt.Println("After =", ElevatorQueue)	
+	//fmt.Println("After =", OrderQueue)	
+	return x
 
 }
-
-func SortArray(Array [][]int, Position int) {
-	temp := Array[Position]
+/*
+func SortArray(ElevatorQueue[] Order, Position int) []Order{
+	temp := ElevatorQueue[Position]
 	//Array[Position] = Array[Position+1] 
 	for i := Position; i > 0; i-- {
-		Array[i] = Array[i-1] 
+		ElevatorQueue[i] = ElevatorQueue[i-1] 
 	}
-	Array[0] = temp
-}
+	ElevatorQueue[0] = temp
+	return ElevatorQueue
+}*/
 
 
 

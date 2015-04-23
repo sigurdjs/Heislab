@@ -16,7 +16,19 @@ var MasterArray[] queue.Order
 var OrderQueue[] queue.Order
 var LiftPos queue.Position
 
-
+func LightsOff() {
+	for i := 0; i < 3; i++ {
+		for j := 0; j < 4; j++ {
+			if i == 0 && j == 3 {
+			} else if i == 1 && j == 0 {
+			} else {
+				if LightArray[i][j] == 0 {
+					driver.SetButtonLampOff(i,j)
+				}
+			}
+		}
+	}
+}
 
 func CheckUpButtons(send_ch chan udp.Udp_message) {	
 	for i := 0; i < 3; i++ {
@@ -56,7 +68,7 @@ func ButtonPoller(send_ch chan udp.Udp_message) {
 		CheckDownButtons(send_ch)
 		CheckUpButtons(send_ch)
 		CheckCommandButtons(send_ch)
-		time.Sleep(10)
+		time.Sleep(10*time.Millisecond)
 	}
 }
 
@@ -68,7 +80,7 @@ func InitializeLift() {
 			driver.SetDirection(0)
 			break
 		}
-		time.Sleep(100)
+		time.Sleep(100*time.Millisecond)
 	}
 	LiftPos.DestinationFloor = -1
 }
@@ -93,8 +105,8 @@ func States(Task string) {
 
 func FloorPoller(FloorReached chan int) {
 	for {
+		//fmt.Println(OrderQueue)
 		currentFloor := driver.GetFloor()
-		LiftPos.CurrentFloor = currentFloor
 		switch  currentFloor {
 		case 0:
 			driver.SetFloorLamp(0)
@@ -109,7 +121,7 @@ func FloorPoller(FloorReached chan int) {
 			driver.SetFloorLamp(3)
 			FloorReached <- 3
 		}		
-		time.Sleep(100)
+		time.Sleep(100*time.Millisecond)
 	}		
 }	
 	
@@ -159,18 +171,26 @@ func TestRun(send_ch chan udp.Udp_message,FloorReached chan int) {
 	}
 }
 
-/*func RemoveOrder(flr int) {
-	if len(OrderQueue) > 2 {
-		for i := len(OrderQueue)-2; i > -1; i-- {
-			if OrderQueue[i].DestinationFloor == OrderQueue[0].DestinationFloor {
-				driver.SetButtonLampOff(OrderQueue[i].ButtonType,flr)
-				LightArray[OrderQueue[i].ButtonType][flr] = 0
+func RemoveOrder(flr int) {
+	if (len(OrderQueue) > 1) {
+		for i := len(OrderQueue)-1; i > -1; i-- {
+			if (OrderQueue[i].DestinationFloor == OrderQueue[0].DestinationFloor) && (i == len(OrderQueue)-1) {
+				LightArray[OrderQueue[i].ButtonType][OrderQueue[i].DestinationFloor] = 0	
+				OrderQueue = OrderQueue[:i]
+			} else if (OrderQueue[i].DestinationFloor == OrderQueue[0].DestinationFloor) && (i != len(OrderQueue)-1) {
+				LightArray[OrderQueue[i].ButtonType][OrderQueue[i].DestinationFloor] = 0
 				OrderQueue = append(OrderQueue[:i], OrderQueue[i+1:]...)
-			}
-		}
-		if OrderQueue[len(OrderQueue)-1].DestinationFloor == OrderQueue[0].DestinationFloor {
-			driver.SetButtonLampOff(OrderQueue[len(OrderQueue)-1].ButtonType,flr)
-			LightArray[OrderQueue[len(OrderQueue)-1].ButtonType][flr] = 0
+			}	
+		}	
+	} else {
+		LightArray[OrderQueue[0].ButtonType][OrderQueue[0].DestinationFloor] = 0
+		OrderQueue = OrderQueue[:0]
+	}
+	LightsOff()
+
+
+
+		/*if OrderQueue[len(OrderQueue)-1].DestinationFloor == OrderQueue[0].DestinationFloor {
 			if len(OrderQueue) >= 2 {
 				OrderQueue = OrderQueue[:len(OrderQueue)-2]}
 		} 	else {
@@ -178,52 +198,51 @@ func TestRun(send_ch chan udp.Udp_message,FloorReached chan int) {
 		}
 	} else if len(OrderQueue) == 2 {
 		if OrderQueue[1].DestinationFloor == OrderQueue[0].DestinationFloor {
-			driver.SetButtonLampOff(OrderQueue[1].ButtonType,flr)
-			driver.SetButtonLampOff(OrderQueue[0].ButtonType,flr)
-			LightArray[OrderQueue[1].ButtonType][flr] = 0
-			LightArray[OrderQueue[0].ButtonType][flr] = 0
 			OrderQueue = OrderQueue[:0]
 		} else {
-			LightArray[OrderQueue[0].ButtonType][flr] = 0
-			driver.SetButtonLampOff(OrderQueue[0].ButtonType,flr)
 			OrderQueue = OrderQueue[1:]
 		}
 
 	} else if len(OrderQueue) == 1 {
-		LightArray[OrderQueue[0].ButtonType][flr] = 0
-		driver.SetButtonLampOff(OrderQueue[0].ButtonType,flr)
 		OrderQueue = OrderQueue[:0]
-	}
-}*/
+	}*/
+}
 
 func Run(FloorReached chan int) {
 	InFloor := true
 	go func() {
 		for {
 			flr := <- FloorReached
+			LiftPos.CurrentFloor = flr
 			if (flr == LiftPos.DestinationFloor && len(OrderQueue) != 0) && InFloor == false{
+				OrderQueue = queue.InternalCostFunction(OrderQueue,LiftPos)
 				States("STOP")
 				RemoveOrder(flr)
-				fmt.Println("heheh")
 				InFloor = true
+			} else if len(OrderQueue) != 0 && InFloor == false{
+				OrderQueue = queue.InternalCostFunction(OrderQueue,LiftPos)
 			}
-			time.Sleep(100)
+			time.Sleep(25*time.Millisecond)
 		}
 	}()
 	go func(){
 		for{
-			if len(OrderQueue) != 0 && InFloor == true {
+			if len(OrderQueue) != 0  {
 				LiftPos.DestinationFloor = OrderQueue[0].DestinationFloor
-				Dir := queue.FindDirection(LiftPos)
-				if Dir == 0 {
-					States("UP")
-					InFloor = false
-				} else if Dir == 1 {
-					States("DOWN")
-					InFloor = false
+				if InFloor == true {
+					Dir := queue.FindDirection(LiftPos)
+					if Dir == 0 {
+						States("UP")
+						InFloor = false
+					} else if Dir == 1 {
+						States("DOWN")
+						InFloor = false
+					} else if Dir == 2 {
+						InFloor = false
+					}
 				}
 			}
-			time.Sleep(10)			
+			time.Sleep(25*time.Millisecond)		
 		}
 	}()
 }
@@ -244,14 +263,12 @@ func PrintMessage(ch chan udp.Udp_message) {
 
 func main () {
 	
-    //var OrderQueue[] queue.Order
 	InitializeLift()
 	send_ch := make (chan udp.Udp_message)
 	FloorReached := make(chan int)
 	go ButtonPoller(send_ch)
 	go FloorPoller(FloorReached)
 	go Run(FloorReached)
-
 	for {
 		if driver.GetStopSignal() == 1 {
 			States("STOP")
