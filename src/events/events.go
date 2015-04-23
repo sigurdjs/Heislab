@@ -159,7 +159,7 @@ func TestRun(send_ch chan udp.Udp_message,FloorReached chan int) {
 	}
 }
 
-func RemoveOrder(flr int) {
+/*func RemoveOrder(flr int) {
 	if len(OrderQueue) > 2 {
 		for i := len(OrderQueue)-2; i > -1; i-- {
 			if OrderQueue[i].DestinationFloor == OrderQueue[0].DestinationFloor {
@@ -194,7 +194,7 @@ func RemoveOrder(flr int) {
 		driver.SetButtonLampOff(OrderQueue[0].ButtonType,flr)
 		OrderQueue = OrderQueue[:0]
 	}
-}
+}*/
 
 func Run(FloorReached chan int) {
 	InFloor := true

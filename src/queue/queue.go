@@ -68,7 +68,7 @@ func InternalCostFunction(OrderQueue[] Order, LiftPos Position) {
 		ElevatorQueue[a] = make([]int, 2)
 	} 
 	for k := 0; k < len(OrderQueue); k++{
-		ElevatorQueue[k][0] = OrderQueue[k].DestinationFloor
+		ElevatorQueue[k][0] = OrderQueue[k].ButtonType
 		ElevatorQueue[k][1] = OrderQueue[k].DestinationFloor
 	}
 	// Sjekker kosten
