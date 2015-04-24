@@ -12,7 +12,7 @@ import (
 
 
 type NetworkMessage struct {
-	MessageType int //1 for alive, 2 for order, 3 for floor update
+	MessageType int //1 for alive, 2 for order to master, 3 for floor update to master, 4 for order from master, 5 for reciept, 6 for set lights on, 7 for set lights off
 	AliveMessage string //Message just to send something	
 	ButtonType int //0 for up, 1 for down, 2 for inside, -1 for unused
 	DestinationFloor int //-1 for unused
@@ -51,9 +51,33 @@ func SendAliveMessage(send_ch chan udp.Udp_message, ElevatorID int) {
 }
 
 //Sends a new order once
-func SendNewOrderMessage(send_ch chan udp.Udp_message, ElevatorID int, ButtonType int, DestinationFloor int) {
+func SendNewOrderMessage(send_ch chan udp.Udp_message, ElevatorID int, ButtonType int, DestinationFloor int, MessageType int) {
 	Order := &NetworkMessage {
-		MessageType: 2, 
+		MessageType: MessageType, 
+		AliveMessage: "I'm Alive", 
+		ButtonType: ButtonType, 
+		DestinationFloor: DestinationFloor, 
+		CurrentFloor: -1, 
+		ElevatorID: ElevatorID}
+	MessageCoded, err := json.Marshal(Order)
+	if err != nil {
+		fmt.Printf("Error: json.Marshal encoder failed: NewOrderMessage\n")
+		panic(err)
+	}
+	snd_msg := udp.Udp_message{Raddr:"broadcast", Data:MessageCoded, Length:len(MessageCoded)}
+	//fmt.Printf("Sending------\n")
+	send_ch <- snd_msg
+}	
+
+func SendSetLights(send_ch chan udp.Udp_message, ElevatorID int, ButtonType int, DestinationFloor int,LightState bool) {
+	var MessageType int
+	if LightState == true {
+		MessageType = 6
+	} else {
+		MessageType = 7
+	}
+	Order := &NetworkMessage {
+		MessageType: MessageType, 
 		AliveMessage: "I'm Alive", 
 		ButtonType: ButtonType, 
 		DestinationFloor: DestinationFloor, 
@@ -87,10 +111,6 @@ func SendCurrentFloor(send_ch chan udp.Udp_message, ElevatorID int, Destination 
 	//fmt.Printf("Sending------\n")
 	send_ch <- snd_msg
 }
-
-
-
-
 
 func ReadFromNetwork (receive_ch chan udp.Udp_message, MessageToProcess chan NetworkMessage){
 	var MessageDecoded NetworkMessage

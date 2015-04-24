@@ -9,12 +9,18 @@ import (
 	"queue"
 )
 
-
-var Dst int
+const Floors = 4
+const Lifts = 3
+var MYID = 0
 var LightArray [3][4] int //row 0 for up, row 1 for down, row 2 for inside
-var MasterArray[] queue.Order
+var GlobalArrayOfOrders[][] queue.Order
 var OrderQueue[] queue.Order
-var LiftPos queue.Position
+var LiftPos[Lifts] queue.Position
+
+func MakeGlobalArrayOfOrders() {
+	GlobalArrayOfOrders = make([][]queue.Order,Lifts)
+}
+
 
 func LightsOff() {
 	for i := 0; i < 3; i++ {
@@ -35,7 +41,7 @@ func CheckUpButtons(send_ch chan udp.Udp_message) {
 		if driver.GetButtonSignal(0,i) == 1 && LightArray[0][i] == 0{
 			LightArray[0][i] = 1
 			driver.SetButtonLampOn(0,i)
-			//Network.SendNewOrderMessage(send_ch,1,0,i) 	
+			Network.SendNewOrderMessage(send_ch,1,0,i,2) 	
 			OrderQueue = append(OrderQueue,queue.Order{DestinationFloor:i, ButtonType:0})
 		}
 	}
@@ -46,7 +52,7 @@ func CheckDownButtons(send_ch chan udp.Udp_message) {
 		if driver.GetButtonSignal(1,i) == 1 && LightArray[1][i] == 0{
 			LightArray[1][i] = 1
 			driver.SetButtonLampOn(1,i)
-			//Network.SendNewOrderMessage(send_ch,1,1,i)	
+			Network.SendNewOrderMessage(send_ch,1,1,i,2)	
 			OrderQueue = append(OrderQueue,queue.Order{DestinationFloor:i, ButtonType:1})	
 		}
 	}
@@ -57,7 +63,6 @@ func CheckCommandButtons(send_ch chan udp.Udp_message) {
 		if driver.GetButtonSignal(2,i) == 1 && LightArray[2][i] == 0 {
 			LightArray[2][i] = 1			
 			driver.SetButtonLampOn(2,i)
-			//Network.SendNewOrderMessage(send_ch,1,2,i)
 			OrderQueue = append(OrderQueue,queue.Order{DestinationFloor:i, ButtonType:2})
 		}
 	}
@@ -82,17 +87,15 @@ func InitializeLift() {
 		}
 		time.Sleep(100*time.Millisecond)
 	}
-	LiftPos.DestinationFloor = -1
+	LiftPos[MYID].DestinationFloor = -1
 }
 
 func States(Task string) {
 	switch Task {
 	case "UP":
 		driver.SetDirection(1)
-		Dst = 3
 	case "DOWN":
 		driver.SetDirection(-1)
-		Dst = 0
 	case "STOP":
 		driver.SetDirection(0)
 		driver.SetDoorOpen(1)
@@ -130,7 +133,40 @@ func FloorPoller(FloorReached chan int) {
 
 
 
-/*func MessageRecieved(MessageToProcess chan Network.NetworkMessage) {
+func MasterReciever(MessageToProcess chan Network.NetworkMessage, send_ch chan udp.Udp_message) {
+	timeout := make(chan bool, 1)
+	go func() {
+    	time.Sleep(10 * time.Second)
+    	timeout <- true
+	}()
+	for {	
+		//select {
+		Message := <- MessageToProcess
+			switch Message.MessageType {
+			case 1:
+				fmt.Printf("I'm alive from: %v \n", Message.ElevatorID)
+			case 2:
+				//NewOrder := queue.Order{DestinationFloor:Message.DestinationFloor,ButtonType:Message.ButtonType}
+				Network.SendNewOrderMessage(send_ch,MYID,Message.ButtonType,Message.DestinationFloor,4)
+				Network.SendSetLights(send_ch,1,Message.ButtonType,Message.DestinationFloor,true)
+				Network.SendSetLights(send_ch,2,Message.ButtonType,Message.DestinationFloor,true)
+				//GlobalArrayOfOrders[Message.ElevatorID] = append(GlobalArrayOfOrders[Message.ElevatorID], NewOrder)
+				//fmt.Println(GlobalArrayOfOrders)
+				//fmt.Println(MasterArray)
+				//cost := queue.CostFunction(MasterArray[0],LiftPos)
+				//fmt.Printf("Kosten for denne knapp er: %v \n",cost)
+				//ElevatorQueue = append(ElevatorQueue,queue.Order{DestinationFloor:Message.DestinationFloor,ButtonType:Message.ButtonType})
+			case 3:
+				//LiftPos[Message.ElevatorID] = queue.Position{Message.CurrentFloor,Message.DestinationFloor}	
+			case 5:
+
+			}
+		//case <- timeout:
+		//	fmt.Printf("Timeout occured\n")
+	}
+}
+
+func SlaveReciever(MessageToProcess chan Network.NetworkMessage) {
 	timeout := make(chan bool, 1)
 	go func() {
     	time.Sleep(10 * time.Second)
@@ -138,38 +174,25 @@ func FloorPoller(FloorReached chan int) {
 	}()
 	for {	
 		select {
-		case Message := <- MessageToProcess:
-			switch Message.MessageType {
-			case 1:
-				fmt.Printf("I'm alive from: %v \n", Message.ElevatorID)
-			case 2:
-				//MasterArray = append(MasterArray,newOrder)
-				//fmt.Println(MasterArray)
-				//cost := queue.CostFunction(MasterArray[0],LiftPos)
-				//fmt.Printf("Kosten for denne knapp er: %v \n",cost)
-				ElevatorQueue = append(ElevatorQueue,queue.Order{DestinationFloor:Message.DestinationFloor,ButtonType:Message.ButtonType})
-			case 3:
-				LiftPos[Message.ElevatorID] = queue.Position {Message.CurrentFloor,Message.DestinationFloor}	
-			}
-		case <- timeout:
-			fmt.Printf("Timeout occured\n")
-		}
-	}
-}*/
+			case Message := <- MessageToProcess:
+				switch Message.MessageType {
+				case 1:
+					fmt.Printf("I'm alive from: %v \n", Message.ElevatorID)
+				case 4:
+					NewOrder := queue.Order{ButtonType:Message.ButtonType,DestinationFloor:Message.DestinationFloor}
+					OrderQueue = append(OrderQueue,NewOrder)	
+				case 6:
+					driver.SetButtonLampOn(Message.ButtonType,Message.DestinationFloor)
+				case 7:
+					driver.SetButtonLampOff(Message.ButtonType,Message.DestinationFloor)
+				}
 
-
-func TestRun(send_ch chan udp.Udp_message,FloorReached chan int) {
-	States("UP")
-	for {
-		flr := <- FloorReached
-		Network.SendCurrentFloor(send_ch,1,Dst,flr)
-		if flr == 3 {
-			States("DOWN")
-		} else if flr == 0 {
-			States("UP")
+			case <- timeout:
+				fmt.Printf("Timeout occured\n")
 		}
 	}
 }
+
 
 func RemoveOrder(flr int) {
 	if (len(OrderQueue) > 1) {
@@ -187,40 +210,22 @@ func RemoveOrder(flr int) {
 		OrderQueue = OrderQueue[:0]
 	}
 	LightsOff()
-
-
-
-		/*if OrderQueue[len(OrderQueue)-1].DestinationFloor == OrderQueue[0].DestinationFloor {
-			if len(OrderQueue) >= 2 {
-				OrderQueue = OrderQueue[:len(OrderQueue)-2]}
-		} 	else {
-				OrderQueue = OrderQueue[:0]
-		}
-	} else if len(OrderQueue) == 2 {
-		if OrderQueue[1].DestinationFloor == OrderQueue[0].DestinationFloor {
-			OrderQueue = OrderQueue[:0]
-		} else {
-			OrderQueue = OrderQueue[1:]
-		}
-
-	} else if len(OrderQueue) == 1 {
-		OrderQueue = OrderQueue[:0]
-	}*/
 }
 
-func Run(FloorReached chan int) {
+func Run(FloorReached chan int,send_ch chan udp.Udp_message) {
 	InFloor := true
 	go func() {
 		for {
 			flr := <- FloorReached
-			LiftPos.CurrentFloor = flr
-			if (flr == LiftPos.DestinationFloor && len(OrderQueue) != 0) && InFloor == false{
-				OrderQueue = queue.InternalCostFunction(OrderQueue,LiftPos)
+			//Network.SendCurrentFloor(send_ch,0,LiftPos[MYID].DestinationFloor,flr)
+			LiftPos[MYID].CurrentFloor = flr
+			if (flr == LiftPos[MYID].DestinationFloor && len(OrderQueue) != 0) && InFloor == false{
+				OrderQueue = queue.InternalCostFunction(OrderQueue,LiftPos[MYID])
 				States("STOP")
 				RemoveOrder(flr)
 				InFloor = true
 			} else if len(OrderQueue) != 0 && InFloor == false{
-				OrderQueue = queue.InternalCostFunction(OrderQueue,LiftPos)
+				OrderQueue = queue.InternalCostFunction(OrderQueue,LiftPos[MYID])
 			}
 			time.Sleep(25*time.Millisecond)
 		}
@@ -228,9 +233,9 @@ func Run(FloorReached chan int) {
 	go func(){
 		for{
 			if len(OrderQueue) != 0  {
-				LiftPos.DestinationFloor = OrderQueue[0].DestinationFloor
+				LiftPos[MYID].DestinationFloor = OrderQueue[0].DestinationFloor
 				if InFloor == true {
-					Dir := queue.FindDirection(LiftPos)
+					Dir := queue.FindDirection(LiftPos[MYID])
 					if Dir == 0 {
 						States("UP")
 						InFloor = false
@@ -247,28 +252,21 @@ func Run(FloorReached chan int) {
 	}()
 }
 
-
-
-func PrintOrders(ch chan queue.Order) {
-	
-}
-
-func PrintMessage(ch chan udp.Udp_message) {
-	for {
-		newOrder := <- ch 
-		fmt.Printf("Length: %v \n", len(newOrder.Data))
-		time.Sleep(10)
-	}
-}
-
 func main () {
 	
 	InitializeLift()
+	MakeGlobalArrayOfOrders()
 	send_ch := make (chan udp.Udp_message)
+	receive_ch := make (chan udp.Udp_message)
+	MessageToProcess := make(chan Network.NetworkMessage)
 	FloorReached := make(chan int)
+	err := udp.Udp_init(20020, 20020, 200, send_ch, receive_ch)	
+	go Network.ReadFromNetwork (receive_ch, MessageToProcess)
+	go MasterReciever(MessageToProcess,send_ch)
+	//go SlaveReciever(MessageToProcess)
 	go ButtonPoller(send_ch)
 	go FloorPoller(FloorReached)
-	go Run(FloorReached)
+	go Run(FloorReached, send_ch)
 	for {
 		if driver.GetStopSignal() == 1 {
 			States("STOP")
@@ -276,18 +274,18 @@ func main () {
 		}
 		time.Sleep(100)
 	}
+		if (err != nil){
+		fmt.Print("main done. err = %s \n", err)
+	}
+
 
 	//fmt.Println(ElevatorQueue)
 	//queue.InternalCostFunction(OrderQueue, LiftPos)
 	
 	/*
 	send_ch := make (chan udp.Udp_message)
-	receive_ch := make (chan udp.Udp_message)
-	MessageToProcess := make(chan Network.NetworkMessage)
 	err := udp.Udp_init(20015, 20010, 200, send_ch, receive_ch)	
 	go ButtonPoller(send_ch)
-	go Network.ReadFromNetwork (receive_ch, MessageToProcess)
-	go MessageRecieved(MessageToProcess)
 	go FloorPoller(FloorReached,send_ch)
 	go TestRun(send_ch,FloorReached)
 	if (err != nil){
