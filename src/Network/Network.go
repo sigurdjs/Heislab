@@ -30,13 +30,13 @@ type NetworkMessage struct {
 
 
 //Continously sends an alivemessage to the network
-func SendAliveMessage(send_ch chan udp.Udp_message, ElevatorID int) {
+func SendMessage(send_ch chan udp.Udp_message,MessageType int,AliveMessage string, ButtonType int,DestinationFloor int,CurrentFloor int,ElevatorID int) {
 	Imalive := &NetworkMessage {
-		MessageType: 1, 
-		AliveMessage: "I'm Alive", 
-		ButtonType: -1, 
-		DestinationFloor: -1, 
-		CurrentFloor: -1, 
+		MessageType: MessageType, 
+		AliveMessage: AliveMessage, 
+		ButtonType: ButtonType, 
+		DestinationFloor: DestinationFloor, 
+		CurrentFloor: CurrentFloor, 
 		ElevatorID: ElevatorID}
 	MessageCoded, err := json.Marshal(Imalive)
 	if err != nil {
@@ -45,11 +45,12 @@ func SendAliveMessage(send_ch chan udp.Udp_message, ElevatorID int) {
 	}
 	//for {
 		//time.Sleep(1*time.Second)	
+	fmt.Printf("Lenght is %v \n", len(MessageCoded))
 	snd_msg := udp.Udp_message{Raddr:"broadcast", Data:MessageCoded, Length:len(MessageCoded)}
 	send_ch <- snd_msg
 	//}
 }
-
+/*
 //Sends a new order once
 func SendNewOrderMessage(send_ch chan udp.Udp_message, ElevatorID int, ButtonType int, DestinationFloor int, MessageType int) {
 	Order := &NetworkMessage {
@@ -64,6 +65,7 @@ func SendNewOrderMessage(send_ch chan udp.Udp_message, ElevatorID int, ButtonTyp
 		fmt.Printf("Error: json.Marshal encoder failed: NewOrderMessage\n")
 		panic(err)
 	}
+	//fmt.Printf("Lenght is %v \n", len(MessageCoded))
 	snd_msg := udp.Udp_message{Raddr:"broadcast", Data:MessageCoded, Length:len(MessageCoded)}
 	//fmt.Printf("Sending------\n")
 	send_ch <- snd_msg
@@ -88,6 +90,7 @@ func SendSetLights(send_ch chan udp.Udp_message, ElevatorID int, ButtonType int,
 		fmt.Printf("Error: json.Marshal encoder failed: NewOrderMessage\n")
 		panic(err)
 	}
+	//fmt.Printf("Lenght is %v \n", len(MessageCoded))
 	snd_msg := udp.Udp_message{Raddr:"broadcast", Data:MessageCoded, Length:len(MessageCoded)}
 	//fmt.Printf("Sending------\n")
 	send_ch <- snd_msg
@@ -107,18 +110,20 @@ func SendCurrentFloor(send_ch chan udp.Udp_message, ElevatorID int, Destination 
 		fmt.Printf("Error: json.Marshal encoder failed: FloorReachedMessage\n")
 		panic(err)
 	}
+	//fmt.Printf("Lenght is %v \n", len(MessageCoded))
 	snd_msg := udp.Udp_message{Raddr:"broadcast", Data:MessageCoded, Length:len(MessageCoded)}
 	//fmt.Printf("Sending------\n")
 	send_ch <- snd_msg
 }
-
-func ReadFromNetwork (receive_ch chan udp.Udp_message, MessageToProcess chan NetworkMessage){
+*/
+func ReadFromNetwork (receive_ch chan udp.Udp_message,MessageToProcess chan NetworkMessage){
 	var MessageDecoded NetworkMessage
 	for {	
 		rcv_msg := <- receive_ch
-		Message := rcv_msg.Data
-		Message = Message[:rcv_msg.Length]
-		err := json.Unmarshal(Message,&MessageDecoded) 
+		//Message := rcv_msg.Data
+		//Message = Message[:rcv_msg.Length]
+		fmt.Printf("Lenght recieved is %v \n", rcv_msg.Length)
+		err := json.Unmarshal(rcv_msg.Data[:rcv_msg.Length],&MessageDecoded) 
 		if err != nil {	
 			fmt.Printf("Error: json.Marshal decoder failed: ReadFromNetwork\n")
 			panic(err)

@@ -2,11 +2,13 @@ package queue
 
 
 import (
-//	"math"
-//"fmt"
-//	"time"
+	"fmt"
+	"math/rand"
+	"time"
 )
 
+const Floors = 4
+const Lifts = 3
 
 type Order struct {
 	DestinationFloor int
@@ -33,60 +35,33 @@ func FindDirection(LiftPos Position) int {
 	return dir
 }
 
-// Lager et midlertidig array
-func InternalCostFunction(OrderQueue[] Order, LiftPos Position) []Order{	
-	/*ElevatorQueue := make([][]int, len(OrderQueue))
-	for a:= 0; a < len(OrderQueue); a++ {
-		ElevatorQueue[a] = make([]int, 2)
+func Abs(num int) int {
+	if num >= 0 {
+		return num
+	} else {
+		return -num
 	}
-	for k := 0; k < len(OrderQueue); k++{
-		ElevatorQueue[k][0] = OrderQueue[k].ButtonType
-		ElevatorQueue[k][1] = OrderQueue[k].DestinationFloor
-	}*/
-	// Sjekker kosten
+}
+
+
+func InternalCostFunction(OrderQueue[] Order, LiftPos Position) []Order{	
 	Cost := make(map[int]int)
 	for i := 0; i < len(OrderQueue); i++ {
-//		fmt.Println(FindDirection(LiftPos))
-		if (FindDirection(LiftPos) == 1 && OrderQueue[i].ButtonType == 1) || (FindDirection(LiftPos) == 0 && OrderQueue[i].ButtonType == 0){
-			if (FindDirection(LiftPos) == 0 && (OrderQueue[i].DestinationFloor > LiftPos.CurrentFloor || OrderQueue[i].DestinationFloor < LiftPos.DestinationFloor)) || 
-			(FindDirection(LiftPos) == 1 && (OrderQueue[i].DestinationFloor < LiftPos.CurrentFloor || OrderQueue[i].DestinationFloor > LiftPos.DestinationFloor)) {
-				Cost[i] += 1
-			} else {
-				Cost[i] += 10
+
+		if (OrderQueue[i].ButtonType == FindDirection(LiftPos)) { //Hvis retningen på bestillingen og heisen er den samme
+			if (OrderQueue[i].DestinationFloor >= LiftPos.CurrentFloor && OrderQueue[i].DestinationFloor <= LiftPos.DestinationFloor) && (OrderQueue[i].ButtonType != 2) { 
+				Cost[i] += Abs(LiftPos.CurrentFloor - OrderQueue[i].DestinationFloor) //Hvis bestilling oppover er på veien				
+				//fmt.Println("Passer oppover med kost ")
 			}
-		//fmt.Println(FindDirection(Position{DestinationFloor:OrderQueue[i].DestinationFloor,CurrentFloor:LiftPos.CurrentFloor}))
-		
-		} else if OrderQueue[i].ButtonType == 2 { //&& (FindDirection(LiftPos) == FindDirection(Position{DestinationFloor:OrderQueue[i].DestinationFloor,CurrentFloor:LiftPos.CurrentFloor})){
-			Cost[i] += 2
+			if (OrderQueue[i].DestinationFloor <= LiftPos.CurrentFloor && OrderQueue[i].DestinationFloor >= LiftPos.DestinationFloor) && (OrderQueue[i].ButtonType != 2) { 
+				Cost[i] += Abs(LiftPos.CurrentFloor - OrderQueue[i].DestinationFloor) //Hvis bestilling nedover er på veien
+				//fmt.Println("Passer nedover med kost ")
+			} 
+		} else if OrderQueue[i].ButtonType == 2 { //Hvis bestilling kommer innenifra
+			Cost[i] += Abs(LiftPos.CurrentFloor - OrderQueue[i].DestinationFloor) 				
+				//fmt.Println("Inneknapp med kost")
 		} else {
 			Cost[i] += 10
-		}
-		if (FindDirection(LiftPos) == 0 && OrderQueue[i].ButtonType == 1) || (FindDirection(LiftPos) == 1 && OrderQueue[i].ButtonType == 0) { // feil retning i forhold til kjøring		
-			if (FindDirection(LiftPos) == 0 && OrderQueue[i].DestinationFloor == 3) {
-				Cost[i] += 3
-			}
-			if (FindDirection(LiftPos) == 1 && OrderQueue[i].DestinationFloor == 0) {
-			Cost[i] += 3
-			} else {
-				Cost[i] += 10} 
-			}	
-		if (FindDirection(LiftPos) == 0 && (OrderQueue[i].DestinationFloor < LiftPos.CurrentFloor || OrderQueue[i].DestinationFloor > LiftPos.DestinationFloor)) || 
-			(FindDirection(LiftPos) == 1 && (OrderQueue[i].DestinationFloor > LiftPos.CurrentFloor || OrderQueue[i].DestinationFloor < LiftPos.DestinationFloor)) {	// ikke mellom CF og DF	
-			Cost[i] += 5 }			
-
-		if OrderQueue[i].ButtonType == 0 || OrderQueue[i].ButtonType == 1   {														// ytre knapper
-			Cost[i] += 2 }
-			
-		if OrderQueue[i].ButtonType == 2 {														// indre knapper
-			Cost[i] += 1 }
-	
-		//time.Sleep(10)*/
-		for j := LiftPos.CurrentFloor; j < OrderQueue[i].DestinationFloor; j++ {
-			if FindDirection(LiftPos) == OrderQueue[i].ButtonType {
-				Cost[i] += 1	
-			} else {
-				Cost[i] += 5
-			}
 		}
 	}
 	MinCostPosition := 0
@@ -100,7 +75,7 @@ func InternalCostFunction(OrderQueue[] Order, LiftPos Position) []Order{
 	
 	//fmt.Println(Cost)
 
-	//fmt.Println("Before =", OrderQueue)	
+	//fmt.Println("Before =", OrderQueue)	SKRIVE BEDRE NAVN PÅ x!
 	var x[] Order
 	a := OrderQueue[MinCostPosition]
 	x = append(x,a)
@@ -111,26 +86,64 @@ func InternalCostFunction(OrderQueue[] Order, LiftPos Position) []Order{
 		OrderQueue = append(OrderQueue[MinCostPosition:],OrderQueue[:MinCostPosition+1]...)
 	}
 	x = append(x,OrderQueue...)
-	//SortArray(OrderQueue,MinCostPosition)
 	
 	//fmt.Println("After =", OrderQueue)	
 	return x
 
 }
-/*
-func SortArray(ElevatorQueue[] Order, Position int) []Order{
-	temp := ElevatorQueue[Position]
-	//Array[Position] = Array[Position+1] 
-	for i := Position; i > 0; i-- {
-		ElevatorQueue[i] = ElevatorQueue[i-1] 
+
+
+func CostFunction(NewOrder Order, LiftPos[3] Position) int {
+
+	for lift := 0; lift < Lifts; lift++ { // Går igjennom alle heiskøene og sjekker om de kan ta noen på veien
+
+		switch (FindDirection(LiftPos[lift])) { 
+
+		case 0: //Up
+
+			if (NewOrder.DestinationFloor > LiftPos[lift].CurrentFloor) && (NewOrder.DestinationFloor <= LiftPos[lift].DestinationFloor) && (NewOrder.ButtonType != 1) {
+				fmt.Println("case 0")
+				if lift == 0 {return lift} // Heis 1	
+				if lift == 1 {return lift} // Heis 2
+				if lift == 2 {return lift} // Heis 3
+			}
+	 
+		case 1: //Down			
+
+			if (NewOrder.DestinationFloor < LiftPos[lift].CurrentFloor) && (NewOrder.DestinationFloor >= LiftPos[lift].DestinationFloor) && (NewOrder.ButtonType != 0) {
+				fmt.Println("case 1")				
+				if lift == 0 {return lift} // Heis 1	
+				if lift == 1 {return lift} // Heis 2
+				if lift == 2 {return lift} // Heis 3
+			}	 	
+		}
 	}
-	ElevatorQueue[0] = temp
-	return ElevatorQueue
+	fmt.Println("Random")
+	rand := random(1, 4)
+	fmt.Println(rand-1)
+	return rand-1
+}
+
+
+
+func random(min, max int) int {
+    rand.Seed(time.Now().Unix())
+    return rand.Intn(max - min) + min
+}
+
+/*func main() {
+	
+	LiftPos := append(LiftPos, Position{CurrentFloor:1, DestinationFloor:3})
+	LiftPos = append(LiftPos, Position{CurrentFloor:0, DestinationFloor:3})
+	LiftPos = append(LiftPos, Position{CurrentFloor:3, DestinationFloor:1})
+
+	NewOrder.ButtonType = 1
+	NewOrder.DestinationFloor = 2
+	
+	
+	CostFunction(NewOrder, LiftPos)
+
 }*/
-
-
-
-
 
 
 
