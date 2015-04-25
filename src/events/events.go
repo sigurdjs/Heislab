@@ -14,12 +14,13 @@ import (
 )
 
 
-var MYID = 0
-var master = true
+var MYID = 2
+var master = false
 var LightArray [3][4] int //row 0 for up, row 1 for down, row 2 for inside
 var OrderQueue[] types.Order
 var LiftPos[] types.Position
 var LiftStatus[] bool
+var OffGrid bool
 
 func MakeGlobalArrayOfOrders(Lifts int) {
 	//GlobalArrayOfOrders := make([][]types.Order,Lifts)
@@ -44,9 +45,11 @@ func CheckUpButtons(send_ch chan udp.Udp_message) {
 	for i := 0; i < 3; i++ {
 		if driver.GetButtonSignal(0,i) == 1 && LightArray[0][i] == 0{
 			LightArray[0][i] = 1
-			//driver.SetButtonLampOn(0,i)
+			if OffGrid == true {
+				OrderQueue = append(OrderQueue,types.Order{DestinationFloor:i, ButtonType:0})
+				driver.SetButtonLampOn(0,i)
+			}
 			network.SendMessage(send_ch,2,"",0,i,-1,MYID)	
-			//OrderQueue = append(OrderQueue,queue.Order{DestinationFloor:i, ButtonType:0})
 		}
 	}
 }
@@ -55,9 +58,11 @@ func CheckDownButtons(send_ch chan udp.Udp_message) {
 	for i := 1; i < 4; i++ {
 		if driver.GetButtonSignal(1,i) == 1 && LightArray[1][i] == 0{
 			LightArray[1][i] = 1
-			//driver.SetButtonLampOn(1,i)
+			if OffGrid == true {
+				OrderQueue = append(OrderQueue,types.Order{DestinationFloor:i, ButtonType:0})
+				driver.SetButtonLampOn(0,i)
+			}
 			network.SendMessage(send_ch,2,"",1,i,-1,MYID)	
-			//OrderQueue = append(OrderQueue,queue.Order{DestinationFloor:i, ButtonType:1})	
 		}
 	}
 }
@@ -336,6 +341,7 @@ func TimeOut(TimedOut chan int){
 		for {
 			select {
 			case <-timeout:
+				fmt.Println(LiftStatus)
 				for i := 0; i < len(LiftStatus); i++ {
 					if LiftStatus[i] == false {
 						LiftGone = i
@@ -343,15 +349,22 @@ func TimeOut(TimedOut chan int){
 				}
 				if LiftStatus[0] == false && MYID == 1 {
 					master = true
+					if LiftStatus[2] == false {
+						OffGrid = true
+					}
 					fmt.Println("Master is 1")
 				} else if LiftStatus[0] == false && LiftStatus[1] == false {
 					master = true
+					OffGrid = true
 					fmt.Println("Master is 2")
 				} else if MYID == 0 {
 					master = true
+					if (LiftStatus[1] == false && LiftStatus[2] == false) {
+						OffGrid = true
+					}
 				} else {
 					master = false
-				}
+				} 
 				TimedOut <- LiftGone
 				TimedOut <- numberOfGone
 			case <- notimeout:
