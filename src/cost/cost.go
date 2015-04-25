@@ -82,7 +82,7 @@ func InternalCostFunction(OrderQueue[] types.Order, LiftPos types.Position) []ty
 }
 
 
-func CostFunction(NewOrder types.Order, LiftPos[] types.Position, Lifts int) int {
+func CostFunction(NewOrder types.Order, LiftPos[] types.Position, TimedOut int ,Lifts int) int {
 
 	for lift := 0; lift < Lifts; lift++ { // Går igjennom alle heiskøene og sjekker om de kan ta noen på veien
 
@@ -93,7 +93,13 @@ func CostFunction(NewOrder types.Order, LiftPos[] types.Position, Lifts int) int
 			if (NewOrder.DestinationFloor > LiftPos[lift].CurrentFloor) && (NewOrder.DestinationFloor <= LiftPos[lift].DestinationFloor) && (NewOrder.ButtonType != 1) {
 				fmt.Println("case 0")
 				for i := 0; i < Lifts; i++ {
-					if lift == i {return lift} // Heis n
+					if TimedOut == 0 {
+						if lift == i {return lift +1} // Heis n
+					} else if TimedOut == 1 {
+						if lift == i {return lift*2}
+					} else {
+						if lift == i {return lift}
+					}
 				}
 			}
 	 
@@ -102,7 +108,13 @@ func CostFunction(NewOrder types.Order, LiftPos[] types.Position, Lifts int) int
 			if (NewOrder.DestinationFloor < LiftPos[lift].CurrentFloor) && (NewOrder.DestinationFloor >= LiftPos[lift].DestinationFloor) && (NewOrder.ButtonType != 0) {
 				fmt.Println("case 1")				
 				for i := 0; i < Lifts; i++ {
-					if lift == i {return lift} // Heis n
+					if TimedOut == 0 {
+						if lift == i {return lift +1} // Heis n
+					} else if TimedOut == 1 {
+						if lift == i {return lift*2}
+					} else {
+						if lift == i {return lift}
+					}
 				}
 			}	
 
@@ -110,13 +122,26 @@ func CostFunction(NewOrder types.Order, LiftPos[] types.Position, Lifts int) int
 			if (NewOrder.DestinationFloor == LiftPos[lift].CurrentFloor) {
 				fmt.Println("case 2")				
 				for i := 0; i < Lifts; i++ {
-					if lift == i {return lift} // Heis n
+					if TimedOut == 0 {
+						if lift == i {return lift +1} // Heis n
+					} else if TimedOut == 1 {
+						if lift == i {return lift*2}
+					} else {
+						if lift == i {return lift}
+					}
 				}
 			} 	
 		}
 	}
-	fmt.Println("Random")
-	rand := random(0, Lifts)
+	var rand int
+	fmt.Println("Random", Lifts)
+	if TimedOut == 0 {
+		rand = random(0, Lifts)+1
+	} else if TimedOut == 1 {
+		rand = 2*random(0, Lifts)
+	} else {
+		rand = random(0, Lifts)
+	}
 	fmt.Println(rand)
 	return rand
 }
