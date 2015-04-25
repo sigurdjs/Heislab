@@ -5,25 +5,14 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
+	"types"
 )
 
-const Floors = 4
-const Lifts = 3
-
-type Order struct {
-	DestinationFloor int
-	ButtonType int // 0 for up, 1 for down and 2 for command
-	//elevatorId int //Which elevator the order is from
-}
-
-type Position struct {
-	CurrentFloor int
-	DestinationFloor int
-}
 
 
 
-func FindDirection(LiftPos Position) int {
+
+func FindDirection(LiftPos types.Position) int {
 	dir := -1 //0 for up, 1 for down, 2 for idle, -1 for unused 
 	if LiftPos.CurrentFloor < LiftPos.DestinationFloor {
 		dir = 0
@@ -44,7 +33,7 @@ func Abs(num int) int {
 }
 
 
-func InternalCostFunction(OrderQueue[] Order, LiftPos Position) []Order{	
+func InternalCostFunction(OrderQueue[] types.Order, LiftPos types.Position) []types.Order{	
 	Cost := make(map[int]int)
 	for i := 0; i < len(OrderQueue); i++ {
 
@@ -76,24 +65,24 @@ func InternalCostFunction(OrderQueue[] Order, LiftPos Position) []Order{
 	//fmt.Println(Cost)
 
 	//fmt.Println("Before =", OrderQueue)	SKRIVE BEDRE NAVN PÅ x!
-	var x[] Order
-	a := OrderQueue[MinCostPosition]
-	x = append(x,a)
-	//fmt.Println(x)
+	var BestCost[] types.Order
+	MinCostValue := OrderQueue[MinCostPosition]
+	BestCost = append(BestCost,MinCostValue)
+	//fmt.Println(BestCost)
 	if MinCostPosition == len(OrderQueue)-1 {
 		OrderQueue = OrderQueue[:MinCostPosition]
 	} else {
 		OrderQueue = append(OrderQueue[MinCostPosition:],OrderQueue[:MinCostPosition+1]...)
 	}
-	x = append(x,OrderQueue...)
+	BestCost = append(BestCost,OrderQueue...)
 	
 	//fmt.Println("After =", OrderQueue)	
-	return x
+	return BestCost
 
 }
 
 
-func CostFunction(NewOrder Order, LiftPos[3] Position) int {
+func CostFunction(NewOrder types.Order, LiftPos[] types.Position, Lifts int) int {
 
 	for lift := 0; lift < Lifts; lift++ { // Går igjennom alle heiskøene og sjekker om de kan ta noen på veien
 
@@ -103,25 +92,33 @@ func CostFunction(NewOrder Order, LiftPos[3] Position) int {
 
 			if (NewOrder.DestinationFloor > LiftPos[lift].CurrentFloor) && (NewOrder.DestinationFloor <= LiftPos[lift].DestinationFloor) && (NewOrder.ButtonType != 1) {
 				fmt.Println("case 0")
-				if lift == 0 {return lift} // Heis 1	
-				if lift == 1 {return lift} // Heis 2
-				if lift == 2 {return lift} // Heis 3
+				for i := 0; i < Lifts; i++ {
+					if lift == i {return lift} // Heis n
+				}
 			}
 	 
 		case 1: //Down			
 
 			if (NewOrder.DestinationFloor < LiftPos[lift].CurrentFloor) && (NewOrder.DestinationFloor >= LiftPos[lift].DestinationFloor) && (NewOrder.ButtonType != 0) {
 				fmt.Println("case 1")				
-				if lift == 0 {return lift} // Heis 1	
-				if lift == 1 {return lift} // Heis 2
-				if lift == 2 {return lift} // Heis 3
-			}	 	
+				for i := 0; i < Lifts; i++ {
+					if lift == i {return lift} // Heis n
+				}
+			}	
+
+		case 2: //Idle
+			if (NewOrder.DestinationFloor == LiftPos[lift].CurrentFloor) {
+				fmt.Println("case 2")				
+				for i := 0; i < Lifts; i++ {
+					if lift == i {return lift} // Heis n
+				}
+			} 	
 		}
 	}
 	fmt.Println("Random")
-	rand := random(1, 4)
-	fmt.Println(rand-1)
-	return rand-1
+	rand := random(0, Lifts)
+	fmt.Println(rand)
+	return rand
 }
 
 
@@ -130,33 +127,3 @@ func random(min, max int) int {
     rand.Seed(time.Now().Unix())
     return rand.Intn(max - min) + min
 }
-
-/*func main() {
-	
-	LiftPos := append(LiftPos, Position{CurrentFloor:1, DestinationFloor:3})
-	LiftPos = append(LiftPos, Position{CurrentFloor:0, DestinationFloor:3})
-	LiftPos = append(LiftPos, Position{CurrentFloor:3, DestinationFloor:1})
-
-	NewOrder.ButtonType = 1
-	NewOrder.DestinationFloor = 2
-	
-	
-	CostFunction(NewOrder, LiftPos)
-
-}*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
